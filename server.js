@@ -8,27 +8,6 @@ var application_root = __dirname,
 // Create server
 var app = express();
 
-// Configure server
-app.configure( function() {
-  // parses request body and populates request.body
-  app.use( express.bodyParser() );
-
-  // checks request.body and HTTP method overrides
-  app.use( express.methodOverride() );
-
-  // perform route lookup based on url and HTTP method
-  app.use( app.router );
-
-  // where to serve static content
-  app.use( express.static( path.join( application_root, 'site' ) ) );
-
-  // Show all errors in development
-  app.use( express.errorHandler({ dumpExceptions: true, showStack: true }));
-});
-
-// Start server
-var port = 4711;
-
 // Connect to database
 mongoose.connect( 'mongodb://localhost/library_database' );
 
@@ -47,8 +26,22 @@ var Book = new mongoose.Schema({
 // Models
 var BookModel = mongoose.model( 'Book', Book );
 
-app.listen( port, function() {
-  console.log( 'Express server listening on port %d in %s mode', port, app.settings.env );
+// Configure server
+app.configure( function() {
+  // parses request body and populates request.body
+  app.use( express.bodyParser() );
+
+  // checks request.body and HTTP method overrides
+  app.use( express.methodOverride() );
+
+  // perform route lookup based on url and HTTP method
+  app.use( app.router );
+
+  // where to serve static content
+  app.use( express.static( path.join( application_root, 'site' ) ) );
+
+  // Show all errors in development
+  app.use( express.errorHandler({ dumpExceptions: true, showStack: true }));
 });
 
 // Routes
@@ -61,6 +54,17 @@ app.get( '/api/books', function( request, response ) {
   return BookModel.find( function( err, books ) {
     if( !err ) {
       return response.send( books );
+    } else {
+      return console.log( err );
+    }
+  });
+});
+
+// Get a single book by id
+app.get( '/api/books/:id', function( request, response ) {
+  return BookModel.findById( request.params.id, function( err, book) {
+    if( !err ) {
+      return response.send( book );
     } else {
       return console.log( err );
     }
@@ -82,17 +86,6 @@ app.post( '/api/books', function( request, response ) {
       return response.send( book );
     } else {
       console.log( err );
-    }
-  });
-});
-
-// Get a single book by id
-app.get( '/api/books/:id', function( request, response ) {
-  return BookModel.findById( request.params.id, function( err, book) {
-    if( !err ) {
-      return response.send( book );
-    } else {
-      return console.log( err );
     }
   });
 });
@@ -130,4 +123,11 @@ app.delete( '/api/books/:id', function( request, response ) {
       }
     });
   });
+});
+
+// Start server
+var port = 4711;
+
+app.listen( port, function() {
+  console.log( 'Express server listening on port %d in %s mode', port, app.settings.env );
 });
